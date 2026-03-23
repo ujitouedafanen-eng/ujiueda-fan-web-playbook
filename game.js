@@ -579,6 +579,31 @@ function hideCard() {
   document.getElementById('card-flipper').classList.remove('flipped');
 }
 
+function restorePhase2IdleUI() {
+  hideOverlay();
+  hideCard();
+  setupCanvas();
+  updatePhaseDisplay('カードフェーズ');
+  updateTimerDisplay(TIMER_DURATION);
+
+  document.getElementById('timer-panel').style.display = '';
+  document.getElementById('pool-panel').style.display = '';
+  document.getElementById('start-btn').style.display = '';
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('retry-btn').style.display = '';
+  document.getElementById('ace-panel').style.display = 'none';
+  document.getElementById('place-btn').style.display = 'none';
+  document.getElementById('next-piece-area').style.display = 'none';
+  document.getElementById('preview-title').textContent = 'Drawn Card';
+
+  document.querySelectorAll('.pool-btn').forEach(btn => {
+    btn.classList.toggle('excluded', gameState.excludedItems.has(btn.dataset.item));
+  });
+
+  document.getElementById('ace-count').textContent = gameState.aceCount;
+  renderBoard();
+}
+
 // ============================================================
 //  PHASE 1 - TETRIS
 // ============================================================
@@ -1303,22 +1328,8 @@ setupStartButton();
 
 // Try to restore saved game, otherwise show start overlay
 if (loadGame()) {
-  setupCanvas();
-  // Restore Phase 2 UI
-  document.getElementById('timer-panel').style.display = '';
-  document.getElementById('pool-panel').style.display = '';
-  document.getElementById('start-btn').style.display = '';
-  document.getElementById('start-btn').disabled = false;
-  document.getElementById('retry-btn').style.display = '';
-  document.getElementById('next-piece-area').style.display = 'none';
-  document.getElementById('preview-title').textContent = 'Drawn Card';
-  // Restore pool button exclusion states
-  document.querySelectorAll('.pool-btn').forEach(b => {
-    if (gameState.excludedItems.has(b.dataset.item)) b.classList.add('excluded');
-  });
-  document.getElementById('ace-count').textContent = gameState.aceCount;
-  setupCanvas();
-  gameState.phase = 'INIT';
+  restorePhase2IdleUI();
+} else {
   showOverlay(
     'Tetris Card Game',
     {
