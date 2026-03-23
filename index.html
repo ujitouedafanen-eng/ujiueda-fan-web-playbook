@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>テトリス＆カードゲーム</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>テトリス＆カードゲーム</h1>
+
+  <div id="game-container">
+    <!-- Game Board Canvas -->
+    <canvas id="board-canvas"></canvas>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+
+      <!-- Next Piece / Card Display -->
+      <div class="sidebar-panel">
+        <div class="panel-title" id="preview-title">次のピース</div>
+        <!-- Phase 1: next piece preview -->
+        <div id="next-piece-area">
+          <canvas id="next-canvas" width="80" height="80"></canvas>
+        </div>
+        <!-- Phase 2: card flip display (hidden initially) -->
+        <div id="card-area" class="hidden">
+          <div class="card-flipper" id="card-flipper">
+            <div class="card-face card-back">?</div>
+            <div class="card-face card-front" id="card-front">
+              <span id="card-icon">?</span>
+              <span class="card-label" id="card-label"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase Display -->
+      <div class="sidebar-panel">
+        <div id="phase-display">フェーズ: <span id="phase-val">テトリス</span></div>
+      </div>
+
+      <!-- Timer (Phase 2 only) -->
+      <div class="sidebar-panel" id="timer-panel" style="display:none;">
+        <div class="panel-title">タイマー</div>
+        <div id="timer-area">
+          <svg id="timer-svg" width="70" height="70" viewBox="0 0 70 70">
+            <circle class="timer-ring-bg" cx="35" cy="35" r="28"/>
+            <circle class="timer-ring-fg" id="timer-ring" cx="35" cy="35" r="28"
+              stroke-dasharray="175.93"
+              stroke-dashoffset="0"
+              stroke="#4caf50"/>
+          </svg>
+          <div id="timer-text">5.0</div>
+        </div>
+      </div>
+
+      <!-- Pool Exclusion (Phase 2 only) -->
+      <div class="sidebar-panel" id="pool-panel" style="display:none;">
+        <div class="panel-title">除外するアイテム</div>
+        <div id="pool-buttons">
+          <button class="pool-btn pool-btn-piece" data-item="I"><canvas class="pool-piece-canvas" width="32" height="32"></canvas></button>
+          <button class="pool-btn pool-btn-piece" data-item="O"><canvas class="pool-piece-canvas" width="32" height="32"></canvas></button>
+          <button class="pool-btn pool-btn-piece" data-item="T"><canvas class="pool-piece-canvas" width="32" height="32"></canvas></button>
+          <button class="pool-btn pool-btn-piece" data-item="S"><canvas class="pool-piece-canvas" width="32" height="32"></canvas></button>
+          <button class="pool-btn pool-btn-piece" data-item="Z"><canvas class="pool-piece-canvas" width="32" height="32"></canvas></button>
+          <button class="pool-btn pool-btn-piece" data-item="J"><canvas class="pool-piece-canvas" width="32" height="32"></canvas></button>
+          <button class="pool-btn pool-btn-piece" data-item="L"><canvas class="pool-piece-canvas" width="32" height="32"></canvas></button>
+          <div class="pool-counter" id="ace-counter">
+            <button class="counter-btn" id="ace-minus">−</button>
+            <span class="counter-value" id="ace-count">1</span>
+            <span class="counter-label">ACE</span>
+            <button class="counter-btn" id="ace-plus">＋</button>
+          </div>
+          <button class="pool-btn" data-item="JOKER">JKR</button>
+        </div>
+      </div>
+
+      <!-- ACE Picker (Phase 2 only) -->
+      <div class="sidebar-panel" id="ace-panel" style="display:none;">
+        <div class="panel-title">ACE！好きなピースを選択</div>
+        <div id="ace-picker">
+          <button class="ace-btn" data-type="I"><canvas class="ace-piece-canvas" width="44" height="44"></canvas></button>
+          <button class="ace-btn" data-type="O"><canvas class="ace-piece-canvas" width="44" height="44"></canvas></button>
+          <button class="ace-btn" data-type="T"><canvas class="ace-piece-canvas" width="44" height="44"></canvas></button>
+          <button class="ace-btn" data-type="S"><canvas class="ace-piece-canvas" width="44" height="44"></canvas></button>
+          <button class="ace-btn" data-type="Z"><canvas class="ace-piece-canvas" width="44" height="44"></canvas></button>
+          <button class="ace-btn" data-type="J"><canvas class="ace-piece-canvas" width="44" height="44"></canvas></button>
+          <button class="ace-btn" data-type="L"><canvas class="ace-piece-canvas" width="44" height="44"></canvas></button>
+        </div>
+      </div>
+
+      <!-- Start Button (Phase 2 only) -->
+      <button id="start-btn" style="display:none;" disabled>START</button>
+      <button id="place-btn" style="display:none;">配置確定</button>
+
+      <!-- Controls Hint -->
+      <div class="sidebar-panel">
+        <div id="controls-hint">
+          ← → : 移動<br>
+          ↑ / Z : 回転<br>
+          ↓ : ソフトドロップ<br>
+          Space : ハードドロップ
+        </div>
+      </div>
+      <button id="retry-btn" style="display:none;">最初からやり直す</button>
+    </div>
+  </div>
+
+  <!-- Overlay (Start Screen / Game Over / Win) -->
+  <div id="overlay">
+    <div class="overlay-box" id="overlay-box">
+      <h2 id="overlay-title">テトリス＆カードゲーム</h2>
+      <p id="overlay-text">
+        テトリスをプレイしてゲームオーバーになったら<br>
+        カード引きフェーズが始まります。<br><br>
+        ブロックを積んで底辺を消せばクリア！
+      </p>
+      <button class="overlay-btn" id="overlay-btn">ゲームスタート</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
